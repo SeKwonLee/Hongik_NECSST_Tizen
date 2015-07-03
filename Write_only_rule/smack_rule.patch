@@ -1,0 +1,74 @@
+diff -urN ./smack/smack_access.c ./linux-3.10/security/smack/smack_access.c
+--- ./smack/smack_access.c	2015-05-30 21:14:26.678667533 -0700
++++ ./linux-3.10/security/smack/smack_access.c	2015-05-18 06:04:57.392677529 -0700
+@@ -46,6 +46,11 @@
+ 	.smk_secid	= 7,
+ };
+ 
++struct smack_known smack_known_sekwon = {
++	.smk_known	= "#",
++	.smk_secid	= 8,
++};
++
+ LIST_HEAD(smack_known_list);
+ 
+ /*
+@@ -127,6 +132,20 @@
+ 	 *
+ 	 * A star subject can't access any object.
+ 	 */
++	if ((request & MAY_WRITE) == request) {
++		if (object_label == smack_known_sekwon.smk_known)
++		{
++			goto out_audit;
++		}
++	}
++	else if ((request & MAY_ANYREAD) == request) {
++		if (object_label == smack_known_sekwon.smk_known)
++		{
++			rc = -EACCES;
++			goto out_audit;
++		}
++	}
++
+ 	if (subject_label == smack_known_star.smk_known) {
+ 		rc = -EACCES;
+ 		goto out_audit;
+diff -urN ./smack/smack.h ./linux-3.10/security/smack/smack.h
+--- ./smack/smack.h	2015-05-30 21:13:42.910668984 -0700
++++ ./linux-3.10/security/smack/smack.h	2015-05-18 05:23:41.836759569 -0700
+@@ -224,6 +224,7 @@
+ extern struct smack_known smack_known_invalid;
+ extern struct smack_known smack_known_star;
+ extern struct smack_known smack_known_web;
++extern struct smack_known smack_known_sekwon;
+ 
+ extern struct mutex	smack_known_lock;
+ extern struct list_head smack_known_list;
+diff -urN ./smack/smack_lsm.c ./linux-3.10/security/smack/smack_lsm.c
+--- ./smack/smack_lsm.c	2015-05-30 21:13:27.762669486 -0700
++++ ./linux-3.10/security/smack/smack_lsm.c	2015-05-18 05:02:25.740801859 -0700
+@@ -3581,6 +3581,7 @@
+ 	mutex_init(&smack_known_star.smk_rules_lock);
+ 	mutex_init(&smack_known_invalid.smk_rules_lock);
+ 	mutex_init(&smack_known_web.smk_rules_lock);
++	mutex_init(&smack_known_sekwon.smk_rules_lock);
+ 	/*
+ 	 * Initialize rule lists
+ 	 */
+@@ -3590,6 +3591,7 @@
+ 	INIT_LIST_HEAD(&smack_known_floor.smk_rules);
+ 	INIT_LIST_HEAD(&smack_known_invalid.smk_rules);
+ 	INIT_LIST_HEAD(&smack_known_web.smk_rules);
++	INIT_LIST_HEAD(&smack_known_sekwon.smk_rules);
+ 	/*
+ 	 * Create the known labels list
+ 	 */
+@@ -3599,6 +3601,7 @@
+ 	list_add(&smack_known_floor.list, &smack_known_list);
+ 	list_add(&smack_known_invalid.list, &smack_known_list);
+ 	list_add(&smack_known_web.list, &smack_known_list);
++	list_add(&smack_known_sekwon.list, &smack_known_list);
+ }
+ 
+ /**
