@@ -1,1 +1,0 @@
-cmd_security/smack/smack.o := /home/sekwon/tizen-sdk/tools/arm-linux-gnueabi-gcc-4.5/bin/arm-linux-gnueabi-ld -EL    -r -o security/smack/smack.o security/smack/smack_lsm.o security/smack/smack_access.o security/smack/smackfs.o 
